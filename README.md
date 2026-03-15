@@ -25,6 +25,11 @@ A modern web application for generating code snippets using AI. This project pro
 - Java
 - C++
 
+🚀 **Self-Training AI**
+- **Train All Models**: Pre-train the neural network on all supported languages at once
+- **Smart Training**: Uses sequence-based learning with 50-character context windows
+- **Optimized Performance**: 5-layer LSTM with 512 neurons per layer
+
 🎨 **Beautiful UI**
 - Modern gradient design
 - Responsive layout
@@ -34,7 +39,8 @@ A modern web application for generating code snippets using AI. This project pro
 - Neural network visualization canvas
 
 💻 **Easy to Use**
-- Simple prompt input
+- **Self-Training**: Click "🚀 Train All Models" to pre-train on all languages
+- Simple prompt input for code generation
 - Language selection dropdown
 - Neural Network Code Generation: Real AI-powered code generation using TensorFlow.js
 - Neural Network Code Editing: Improve generated code with AI enhancements

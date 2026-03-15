@@ -158,6 +158,34 @@ async function trainModel(language) {
     }
 }
 
+// Self-training function to train on all languages
+async function trainAllModels(onProgress) {
+    try {
+        console.log('Starting self-training on all languages...');
+        if (onProgress) onProgress('Initializing comprehensive training...');
+
+        const languages = Object.keys(trainingData);
+        console.log(`Training on ${languages.length} languages: ${languages.join(', ')}`);
+
+        for (let i = 0; i < languages.length; i++) {
+            const language = languages[i];
+            const progress = `Training ${language.toUpperCase()} (${i + 1}/${languages.length})...`;
+            console.log(progress);
+            if (onProgress) onProgress(progress);
+
+            await trainModel(language);
+        }
+
+        console.log('Self-training completed successfully!');
+        if (onProgress) onProgress('Training complete! Ready to generate code.');
+        return true;
+    } catch (error) {
+        console.error('Error during self-training:', error);
+        if (onProgress) onProgress('Training failed. You can still generate code for individual languages.');
+        throw error;
+    }
+}
+
 // Enhanced logging for debugging
 async function generateCodeWithNN(prompt, language, onProgress) {
     try {
@@ -188,7 +216,7 @@ async function generateCodeWithNN(prompt, language, onProgress) {
 
             const prediction = model.predict(tf.tensor3d([[input]], [1, 1, vocabSize]));
             const predictionData = await prediction.data();
-            const probabilities = predictionData[0][0]; // [timestep][vocabSize]
+            const probabilities = predictionData; // Flat array of probabilities
 
             // Sample from distribution
             const randomIndex = sampleFromDistribution(probabilities);
@@ -480,6 +508,7 @@ const fileList = document.getElementById('file-list');
 const neuralCanvas = document.getElementById('neural-canvas');
 const startVizBtn = document.getElementById('start-viz-btn');
 const stopVizBtn = document.getElementById('stop-viz-btn');
+const trainAllBtn = document.getElementById('train-all-btn');
 
 // Canvas context
 const ctx = neuralCanvas.getContext('2d');
@@ -650,6 +679,34 @@ function updateFileList() {
         fileList.appendChild(fileItem);
     });
 }
+
+// Train all models button event listener
+trainAllBtn.addEventListener('click', async () => {
+    if (!model) {
+        alert('Model not initialized yet. Please wait for the page to load.');
+        return;
+    }
+
+    const originalText = trainAllBtn.textContent;
+    trainAllBtn.textContent = '🚀 Training...';
+    trainAllBtn.disabled = true;
+    generateBtn.disabled = true;
+
+    try {
+        await trainAllModels((status) => {
+            trainAllBtn.textContent = status;
+        });
+
+        alert('🎉 All models trained successfully! You can now generate code in any language.');
+    } catch (error) {
+        console.error('Training failed:', error);
+        alert('Training failed. Check the console for details.');
+    } finally {
+        trainAllBtn.textContent = originalText;
+        trainAllBtn.disabled = false;
+        generateBtn.disabled = false;
+    }
+});
 
 // Event listeners
 generateBtn.addEventListener('click', async () => {
