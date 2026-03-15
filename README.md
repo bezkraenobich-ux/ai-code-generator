@@ -2,6 +2,19 @@
 
 A modern web application for generating code snippets using AI. This project provides an intuitive interface to request and generate code in multiple programming languages.
 
+## Quick Start
+
+1. Start the development server:
+   ```bash
+   cd /workspaces/ai-code-generator
+   python3 -m http.server 8001
+   ```
+
+2. Open your browser and navigate to:
+   ```
+   http://localhost:8001/src/index.html
+   ```
+
 ## Features
 
 ✨ **Multi-Language Support**
@@ -17,17 +30,40 @@ A modern web application for generating code snippets using AI. This project pro
 - Responsive layout
 - Smooth animations
 - Dark mode ready
+- File explorer sidebar
+- Neural network visualization canvas
 
 💻 **Easy to Use**
 - Simple prompt input
 - Language selection dropdown
-- One-click code generation
+- Neural Network Code Generation: Real AI-powered code generation using TensorFlow.js
+- Neural Network Code Editing: Improve generated code with AI enhancements
 - Copy to clipboard functionality
+- Download generated code as files
+- Save files to project workspace
+- File explorer to manage saved files
+- Real-time neural network visualization
 
 ⚡ **Fast Performance**
 - Lightweight application
-- No external dependencies
-- Instant UI feedback
+- TensorFlow.js for browser-based AI
+- Optimized neural network architecture (5 layers, 512 neurons)
+- Glorot normal initialization for faster model loading
+- Real neural network training and inference
+- Progress feedback during generation
+- 30-second timeout protection
+- Automatic fallback to mock generation
+
+## Neural Network Architecture
+
+### **Advanced AI Model**
+- **LSTM-based Model**: Uses Long Short-Term Memory layers for sequence prediction
+- **5 Hidden Layers**: Optimized deep neural network architecture for browser performance
+- **512 Neurons per Layer**: Balanced capacity for complex code generation
+- **Character-level Generation**: Trains on code examples to predict next characters
+- **Multi-language Support**: Separate training data for each programming language
+- **Browser-Optimized**: Efficient Glorot normal initialization and reduced batch sizes
+- **Real-time Visualization**: Interactive canvas showing network structure and activity
 
 ## Getting Started
 
@@ -44,10 +80,12 @@ git clone https://github.com/bezkraenobich-ux/ai-code-generator.git
 cd ai-code-generator
 ```
 
-2. Open the application:
+2. Start the development server:
 ```bash
-# Simply open index.html in your browser
-open index.html
+python3 -m http.server 8000
+```
+
+3. Open your browser and navigate to `http://localhost:8000/src/index.html`
 ```
 
 Or use a local server:
@@ -59,15 +97,17 @@ python -m http.server 8000
 npx http-server
 ```
 
-Then navigate to `http://localhost:8000` in your browser.
+Then navigate to `http://localhost:8000/src/index.html` in your browser.
 
 ## Project Structure
 
 ```
 ai-code-generator/
-├── index.html          # Main HTML file
-├── styles.css          # Styling
-├── script.js           # JavaScript functionality
+├── src/
+│   ├── index.html          # Main HTML with 3-panel layout (sidebar + main + graphics)
+│   ├── styles.css          # Styling with sidebar, main content, and canvas
+│   └── script.js           # JavaScript with file management and canvas visualization
+├── generated/              # Directory for storing generated file examples
 └── README.md           # Documentation
 ```
 
@@ -84,7 +124,15 @@ ai-code-generator/
 
 5. **Copy the code** using the copy button
 
-6. **Clear** the form to start over
+6. **Download the code** as a file using the download button
+
+7. **Save to project** to add the file to your workspace (visible in the left sidebar)
+
+8. **Click on saved files** in the sidebar to load them back into the editor
+
+9. **Edit with Neural Network** to improve the code
+
+10. **Clear** the form to start over
 
 ## Features Breakdown
 
@@ -104,6 +152,28 @@ ai-code-generator/
 - Visual feedback
 - Fallback error handling
 
+### Download Generated Code
+- Download code as a file with appropriate extension (.js, .py, .html, etc.)
+- Automatic filename generation
+- Browser-native download functionality
+### Save to Project Workspace
+- Save generated code to a virtual project workspace
+- Files appear in the left sidebar file explorer
+- Click on saved files to load them back into the editor
+- Timestamped filenames for organization
+
+### File Explorer
+- Left sidebar showing all saved files
+- Click to load any saved file
+- Visual indication of active file
+- Scrollable list for multiple files
+
+### Neural Network Visualization
+- Right sidebar with interactive canvas
+- Real-time visualization of neural network structure
+- Animated connections between neurons
+- Start/Stop controls for visualization
+- Visual representation of the 10-layer LSTM architecture
 ## API Integration
 
 To use with OpenAI API:

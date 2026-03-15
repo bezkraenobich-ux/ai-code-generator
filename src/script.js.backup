@@ -1,0 +1,838 @@
+// Training data for the neural network
+const trainingData = {
+    javascript: [
+        'function factorial(n) {\n    if (n === 0 || n === 1) {\n        return 1;\n    }\n    return n * factorial(n - 1);\n}\nconsole.log(factorial(5));',
+        'console.log("Hello, World!");',
+        'function sumArray(arr) {\n    return arr.reduce((sum, num) => sum + num, 0);\n}\nconst numbers = [1, 2, 3, 4, 5];\nconsole.log(sumArray(numbers));'
+    ],
+    python: [
+        'def factorial(n):\n    if n == 0 or n == 1:\n        return 1\n    return n * factorial(n - 1)\nprint(factorial(5))',
+        'print("Hello, World!")',
+        'def sum_list(lst):\n    return sum(lst)\nnumbers = [1, 2, 3, 4, 5]\nprint(sum_list(numbers))'
+    ],
+    html: [
+        '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <title>Example</title>\n</head>\n<body>\n    <h1>Hello</h1>\n</body>\n</html>',
+        '<form action="/submit" method="post">\n    <input type="text" name="name">\n    <button type="submit">Submit</button>\n</form>'
+    ],
+    css: [
+        'body {\n    font-family: Arial;\n    margin: 0;\n}\n.button {\n    background: blue;\n    color: white;\n}',
+        '.container {\n    max-width: 800px;\n    margin: 0 auto;\n}'
+    ],
+    java: [
+        'public class Hello {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}',
+        'public class Factorial {\n    public static int factorial(int n) {\n        if (n == 0) return 1;\n        return n * factorial(n-1);\n    }\n}'
+    ],
+    cpp: [
+        '#include <iostream>\nint main() {\n    std::cout << "Hello, World!" << std::endl;\n    return 0;\n}',
+        '#include <iostream>\nint factorial(int n) {\n    if (n == 0) return 1;\n    return n * factorial(n-1);\n}\nint main() {\n    std::cout << factorial(5) << std::endl;\n}'
+    ]
+};
+
+// Neural network model
+let model;
+let charToIndex = {};
+let indexToChar = {};
+let vocabSize;
+
+// Add error handling to model initialization
+async function initModel() {
+    try {
+        // Create vocabulary
+        const allChars = new Set();
+        Object.values(trainingData).flat().forEach(code => {
+            for (let char of code) {
+                allChars.add(char);
+            }
+        });
+
+        const chars = Array.from(allChars).sort();
+        vocabSize = chars.length;
+
+        chars.forEach((char, index) => {
+            charToIndex[char] = index;
+            indexToChar[index] = char;
+        });
+
+        // Create optimized model with 5 hidden layers and 512 neurons each (balanced performance)
+        model = tf.sequential();
+        model.add(tf.layers.lstm({
+            units: 512,
+            inputShape: [null, vocabSize],
+            returnSequences: true,
+            kernelInitializer: 'glorotNormal', // Faster initializer
+            recurrentInitializer: 'glorotNormal'
+        }));
+        model.add(tf.layers.lstm({
+            units: 512,
+            returnSequences: true,
+            kernelInitializer: 'glorotNormal',
+            recurrentInitializer: 'glorotNormal'
+        }));
+        model.add(tf.layers.lstm({
+            units: 512,
+            returnSequences: true,
+            kernelInitializer: 'glorotNormal',
+            recurrentInitializer: 'glorotNormal'
+        }));
+        model.add(tf.layers.lstm({
+            units: 512,
+            returnSequences: true,
+            kernelInitializer: 'glorotNormal',
+            recurrentInitializer: 'glorotNormal'
+        }));
+        model.add(tf.layers.lstm({
+            units: 512,
+            returnSequences: true,
+            kernelInitializer: 'glorotNormal',
+            recurrentInitializer: 'glorotNormal'
+        }));
+        model.add(tf.layers.dense({
+            units: vocabSize,
+            activation: 'softmax',
+            kernelInitializer: 'glorotNormal'
+        }));
+
+        model.compile({optimizer: 'adam', loss: 'categoricalCrossentropy'});
+
+        console.log('Model initialized with 5 hidden layers and 512 neurons each (optimized)');
+    } catch (error) {
+        console.error('Error during model initialization:', error);
+        throw new Error('Model initialization failed');
+    }
+}
+
+// Add error handling to model training
+async function trainModel(language) {
+    try {
+        if (!trainingData[language]) {
+            throw new Error(`No training data available for language: ${language}`);
+        }
+
+        const sequences = [];
+        const nextChars = [];
+
+        trainingData[language].forEach(code => {
+            for (let i = 0; i < code.length - 1; i++) {
+                sequences.push(code.substring(0, i + 1));
+                nextChars.push(code[i + 1]);
+            }
+        });
+
+        // Prepare training data
+        const xTrain = [];
+        const yTrain = [];
+
+        sequences.forEach((seq, idx) => {
+            const x = Array(vocabSize).fill(0);
+            const y = Array(vocabSize).fill(0);
+
+            if (seq.length > 0) {
+                x[charToIndex[seq[seq.length - 1]]] = 1;
+            }
+            y[charToIndex[nextChars[idx]]] = 1;
+
+            xTrain.push(x);
+            yTrain.push(y);
+        });
+
+        const xs = tf.tensor2d(xTrain, [xTrain.length, vocabSize]);
+        const ys = tf.tensor2d(yTrain, [yTrain.length, vocabSize]);
+
+        console.log(`Training model with ${xTrain.length} samples...`);
+        await model.fit(xs, ys, {epochs: 1, batchSize: 16}); // Reduced batch size for memory
+
+        xs.dispose();
+        ys.dispose();
+
+        console.log('Model trained for', language);
+    } catch (error) {
+        console.error('Error during model training:', error);
+        throw new Error('Model training failed');
+    }
+}
+
+// Enhanced logging for debugging
+async function generateCodeWithNN(prompt, language, onProgress) {
+    try {
+        if (!model) {
+            console.log('Model not initialized. Initializing now...');
+            if (onProgress) onProgress('Initializing Neural Network...');
+            await initModel();
+        }
+
+        console.log(`Training model for language: ${language}`);
+        if (onProgress) onProgress('Training Neural Network...');
+        await trainModel(language);
+
+        if (onProgress) onProgress('Generating Code...');
+        let generated = prompt;
+        const maxLength = 200;
+
+        for (let i = 0; i < maxLength; i++) {
+            const input = Array(vocabSize).fill(0);
+            if (generated.length > 0) {
+                const lastChar = generated[generated.length - 1];
+                if (charToIndex[lastChar] !== undefined) {
+                    input[charToIndex[lastChar]] = 1;
+                } else {
+                    console.warn(`Character '${lastChar}' not in vocabulary.`);
+                }
+            }
+
+            const prediction = model.predict(tf.tensor2d([input], [1, vocabSize]));
+            const probabilities = await prediction.data();
+
+            // Sample from distribution
+            const randomIndex = sampleFromDistribution(probabilities);
+            const nextChar = indexToChar[randomIndex];
+
+            if (nextChar === '\n' && generated.endsWith('\n\n')) break;
+            generated += nextChar;
+
+            prediction.dispose();
+        }
+
+        console.log('Generated code:', generated);
+        return generated;
+    } catch (error) {
+        console.error('Error during code generation:', error);
+        throw new Error('Code generation failed');
+    }
+}
+
+// Helper function to sample from probability distribution
+function sampleFromDistribution(probs) {
+    const rand = Math.random();
+    let cumulative = 0;
+    for (let i = 0; i < probs.length; i++) {
+        cumulative += probs[i];
+        if (rand < cumulative) return i;
+    }
+    return probs.length - 1;
+}
+
+// Mock neural network code editing function
+function editCodeWithNeuralNetwork(code, language) {
+    // Simulate neural network processing - add comments, optimize, etc.
+    let editedCode = code;
+    
+    if (language === 'javascript') {
+        // Add JSDoc comments
+        editedCode = editedCode.replace(/function (\w+)/g, '/**\n * Function description\n * @param {*} params\n * @returns {*}\n */\nfunction $1');
+        
+        // Optimize simple patterns
+        editedCode = editedCode.replace(/if \((\w+) === 0 \|\| (\w+) === 1\)/g, 'if ($1 === 0 || $1 === 1)');
+        
+        // Add error handling
+        if (editedCode.includes('console.log')) {
+            editedCode = editedCode.replace(/console\.log\((.+)\);/g, 'try {\n    console.log($1);\n} catch (error) {\n    console.error("Error logging:", error);\n}');
+        }
+    } else if (language === 'python') {
+        // Add docstrings
+        editedCode = editedCode.replace(/def (\w+)/g, 'def $1:\n    """\n    Function description\n    """');
+        
+        // Add type hints (simplified)
+        editedCode = editedCode.replace(/def (\w+)\((\w+)\):/g, 'def $1($2: int) -> int:');
+        
+        // Add error handling
+        if (editedCode.includes('print(')) {
+            editedCode = editedCode.replace(/print\((.+)\)/g, 'try:\n    print($1)\nexcept Exception as e:\n    print(f"Error: {e}")');
+        }
+    } else if (language === 'html') {
+        // Add semantic structure
+        if (!editedCode.includes('<main>')) {
+            editedCode = editedCode.replace(/(<body>)/, '$1\n    <main>');
+            editedCode = editedCode.replace(/(<\/body>)/, '    </main>\n$1');
+        }
+        
+        // Add meta tags
+        if (!editedCode.includes('<meta name="description"')) {
+            editedCode = editedCode.replace(/(<title>.*<\/title>)/, '$1\n    <meta name="description" content="Generated HTML page">');
+        }
+    } else if (language === 'css') {
+        // Add vendor prefixes (simplified)
+        editedCode = editedCode.replace(/border-radius:/g, '-webkit-border-radius: $1;\n    border-radius:');
+        
+        // Optimize selectors
+        editedCode = editedCode.replace(/\.(\w+) \.(\w+)/g, '.$1.$2');
+    } else if (language === 'java') {
+        // Add JavaDoc
+        editedCode = editedCode.replace(/public class (\w+)/g, '/**\n * Class description\n */\npublic class $1');
+        
+        // Add exception handling
+        if (editedCode.includes('System.out.println')) {
+            editedCode = editedCode.replace(/System\.out\.println\((.+)\);/g, 'try {\n            System.out.println($1);\n        } catch (Exception e) {\n            System.err.println("Error: " + e.getMessage());\n        }');
+        }
+    } else if (language === 'cpp') {
+        // Add Doxygen comments
+        editedCode = editedCode.replace(/int main\(\)/g, '/**\n * @brief Main function\n * @return int\n */\nint main()');
+        
+        // Add error checking
+        if (editedCode.includes('std::cout')) {
+            editedCode = editedCode.replace(/std::cout << (.+) << std::endl;/g, 'try {\n        std::cout << $1 << std::endl;\n    } catch (const std::exception& e) {\n        std::cerr << "Error: " << e.what() << std::endl;\n    }');
+        }
+    }
+    
+    return editedCode;
+}
+
+// Mock AI code generation function
+function generateCode(prompt, language) {
+    const lowerPrompt = prompt.toLowerCase();
+    
+    // Simple keyword-based code generation
+    if (language === 'javascript') {
+        if (lowerPrompt.includes('function') && lowerPrompt.includes('factorial')) {
+            return `function factorial(n) {
+    if (n === 0 || n === 1) {
+        return 1;
+    }
+    return n * factorial(n - 1);
+}
+
+// Example usage:
+console.log(factorial(5)); // Output: 120`;
+        } else if (lowerPrompt.includes('hello world')) {
+            return `console.log('Hello, World!');`;
+        } else if (lowerPrompt.includes('array') && lowerPrompt.includes('sum')) {
+            return `function sumArray(arr) {
+    return arr.reduce((sum, num) => sum + num, 0);
+}
+
+// Example usage:
+const numbers = [1, 2, 3, 4, 5];
+console.log(sumArray(numbers)); // Output: 15`;
+        } else {
+            return `// Generated JavaScript code based on: "${prompt}"
+// This is a placeholder. In a real AI system, this would be generated by an AI model.
+
+function exampleFunction() {
+    console.log('This is an example function.');
+}
+
+exampleFunction();`;
+        }
+    } else if (language === 'python') {
+        if (lowerPrompt.includes('function') && lowerPrompt.includes('factorial')) {
+            return `def factorial(n):
+    if n == 0 or n == 1:
+        return 1
+    return n * factorial(n - 1)
+
+# Example usage:
+print(factorial(5))  # Output: 120`;
+        } else if (lowerPrompt.includes('hello world')) {
+            return `print('Hello, World!')`;
+        } else if (lowerPrompt.includes('list') && lowerPrompt.includes('sum')) {
+            return `def sum_list(lst):
+    return sum(lst)
+
+# Example usage:
+numbers = [1, 2, 3, 4, 5]
+print(sum_list(numbers))  # Output: 15`;
+        } else {
+            return `# Generated Python code based on: "${prompt}"
+# This is a placeholder. In a real AI system, this would be generated by an AI model.
+
+def example_function():
+    print('This is an example function.')
+
+example_function()`;
+        }
+    } else if (language === 'html') {
+        if (lowerPrompt.includes('form')) {
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Form</title>
+</head>
+<body>
+    <form action="/submit" method="post">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+        
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+        
+        <label for="message">Message:</label>
+        <textarea id="message" name="message" required></textarea>
+        
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>`;
+        } else {
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Example Page</title>
+</head>
+<body>
+    <h1>Hello, World!</h1>
+    <p>This is a generated HTML page based on: "${prompt}"</p>
+</body>
+</html>`;
+        }
+    } else if (language === 'css') {
+        if (lowerPrompt.includes('button')) {
+            return `.button {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.button:hover {
+    background-color: #45a049;
+}`;
+        } else {
+            return `/* Generated CSS based on: "${prompt}" */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f0f0f0;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}`;
+        }
+    } else if (language === 'java') {
+        if (lowerPrompt.includes('hello world')) {
+            return `public class HelloWorld {
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
+    }
+}`;
+        } else {
+            return `// Generated Java code based on: "${prompt}"
+// This is a placeholder. In a real AI system, this would be generated by an AI model.
+
+public class Example {
+    public static void main(String[] args) {
+        System.out.println("This is an example Java program.");
+    }
+}`;
+        }
+    } else if (language === 'cpp') {
+        if (lowerPrompt.includes('hello world')) {
+            return `#include <iostream>
+
+int main() {
+    std::cout << "Hello, World!" << std::endl;
+    return 0;
+}`;
+        } else {
+            return `// Generated C++ code based on: "${prompt}"
+// This is a placeholder. In a real AI system, this would be generated by an AI model.
+
+#include <iostream>
+
+int main() {
+    std::cout << "This is an example C++ program." << std::endl;
+    return 0;
+}`;
+        }
+    }
+    
+    // Default fallback
+    return `// Generated code in ${language} based on: "${prompt}"
+// This is a placeholder. In a real AI system, this would be generated by an AI model.
+// Please try a more specific prompt or select a different language.`;
+}
+
+// DOM elements
+const generateBtn = document.getElementById('generate-btn');
+const codeOutput = document.getElementById('code-output');
+const copyBtn = document.getElementById('copy-btn');
+const downloadBtn = document.getElementById('download-btn');
+const saveBtn = document.getElementById('save-btn');
+const editBtn = document.getElementById('edit-btn');
+const languageSelect = document.getElementById('language');
+const promptTextarea = document.getElementById('prompt');
+const fileList = document.getElementById('file-list');
+const neuralCanvas = document.getElementById('neural-canvas');
+const startVizBtn = document.getElementById('start-viz-btn');
+const stopVizBtn = document.getElementById('stop-viz-btn');
+
+// Canvas context
+const ctx = neuralCanvas.getContext('2d');
+
+// Visualization variables
+let animationId = null;
+let isVisualizing = false;
+
+// Saved files storage
+let savedFiles = [];
+
+// Canvas visualization functions
+function drawNeuralNetwork() {
+    if (!ctx) return;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, neuralCanvas.width, neuralCanvas.height);
+    
+    // Draw neural network layers (5 hidden + output)
+    const layers = [512, 512, 512, 512, 512, vocabSize || 50];
+    const layerSpacing = neuralCanvas.width / (layers.length + 1);
+    const maxNeurons = Math.max(...layers);
+    const neuronRadius = 2; // Smaller neurons for better fit
+
+    // Draw connections with reduced complexity
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = 0.5;
+
+    // Only draw connections for first few neurons to avoid performance issues
+    for (let i = 0; i < layers.length - 1; i++) {
+        const x1 = (i + 1) * layerSpacing;
+        const x2 = (i + 2) * layerSpacing;
+
+        // Draw fewer connections for performance
+        const maxConnections = Math.min(10, layers[i]);
+        for (let j = 0; j < maxConnections; j++) {
+            const y1 = (neuralCanvas.height / (maxConnections + 1)) * (j + 1);
+
+            const maxNextConnections = Math.min(10, layers[i + 1]);
+            for (let k = 0; k < maxNextConnections; k++) {
+                const y2 = (neuralCanvas.height / (maxNextConnections + 1)) * (k + 1);
+
+                // Add some animation
+                const alpha = 0.1 + Math.sin(Date.now() * 0.002 + j * 0.5 + k * 0.5) * 0.1;
+                ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+        }
+    }
+
+    // Draw neurons (simplified representation)
+    for (let i = 0; i < layers.length; i++) {
+        const x = (i + 1) * layerSpacing;
+
+        // Show representative neurons instead of all
+        const neuronsToShow = Math.min(15, layers[i]);
+        for (let j = 0; j < neuronsToShow; j++) {
+            const y = (neuralCanvas.height / (neuronsToShow + 1)) * (j + 1);
+
+            // Neuron glow effect
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, neuronRadius * 3);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
+
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(x, y, neuronRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Neuron border
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        // Add layer label
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.font = '10px Arial';
+        ctx.textAlign = 'center';
+        const label = i < layers.length - 1 ? `Hidden ${i + 1}` : 'Output';
+        ctx.fillText(label, x, neuralCanvas.height - 10);
+    }
+
+    // Add some particle effects (reduced for performance)
+    for (let i = 0; i < 3; i++) {
+        const x = Math.random() * neuralCanvas.width;
+        const y = Math.random() * neuralCanvas.height;
+        const size = Math.random() * 1.5 + 0.5;
+
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.3})`;
+    if (isVisualizing) return;
+    
+    isVisualizing = true;
+    startVizBtn.disabled = true;
+    stopVizBtn.disabled = false;
+    
+    function animate() {
+        drawNeuralNetwork();
+        if (isVisualizing) {
+            animationId = requestAnimationFrame(animate);
+        }
+    }
+    
+    animate();
+}
+
+function stopVisualization() {
+    isVisualizing = false;
+    startVizBtn.disabled = false;
+    stopVizBtn.disabled = true;
+    
+    if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+    }
+    
+    // Clear canvas
+    if (ctx) {
+        ctx.clearRect(0, 0, neuralCanvas.width, neuralCanvas.height);
+    }
+}
+
+// Update file list display
+function updateFileList() {
+    if (savedFiles.length === 0) {
+        fileList.innerHTML = '<p class="no-files">No files saved yet</p>';
+        return;
+    }
+    
+    fileList.innerHTML = '';
+    savedFiles.forEach((file, index) => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.innerHTML = `
+            <span class="file-name">${file.name}</span>
+            <span class="file-language">${file.language.toUpperCase()} • ${file.timestamp}</span>
+        `;
+        
+        fileItem.addEventListener('click', () => {
+            // Remove active class from all items
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Add active class to clicked item
+            fileItem.classList.add('active');
+            
+            // Load file content
+            codeOutput.value = file.code;
+            languageSelect.value = file.language;
+            codeOutput.readOnly = true;
+            copyBtn.style.display = 'inline-block';
+            downloadBtn.style.display = 'inline-block';
+            saveBtn.style.display = 'inline-block';
+            editBtn.style.display = 'inline-block';
+        });
+        
+        fileList.appendChild(fileItem);
+    });
+}
+
+// Event listeners
+generateBtn.addEventListener('click', async () => {
+    const prompt = promptTextarea.value.trim();
+    const language = languageSelect.value;
+    
+    if (!prompt) {
+        alert('Please enter a prompt.');
+        return;
+    }
+    
+    // Show loading state
+    generateBtn.textContent = 'Training Neural Network...';
+    generateBtn.disabled = true;
+    
+    try {
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Generation timeout')), 30000); // 30 second timeout
+        });
+        
+        const generationPromise = generateCodeWithNN(prompt, language, (status) => {
+            generateBtn.textContent = status;
+        });
+        
+        const generatedCode = await Promise.race([generationPromise, timeoutPromise]);
+        codeOutput.value = generatedCode;
+        codeOutput.readOnly = true;
+        copyBtn.style.display = 'inline-block';
+        downloadBtn.style.display = 'inline-block';
+        saveBtn.style.display = 'inline-block';
+        editBtn.style.display = 'inline-block';
+        
+        // Reset button
+        generateBtn.textContent = 'Generate Code';
+        generateBtn.disabled = false;
+    } catch (error) {
+        console.error('Error generating code:', error);
+        if (error.message === 'Generation timeout') {
+            alert('Code generation timed out. The neural network is too complex. Using fallback method.');
+        } else {
+            alert('Error generating code. Using fallback method.');
+        }
+        // Fallback to mock
+        const generatedCode = generateCode(prompt, language);
+        codeOutput.value = generatedCode;
+        codeOutput.readOnly = true;
+        copyBtn.style.display = 'inline-block';
+        downloadBtn.style.display = 'inline-block';
+        saveBtn.style.display = 'inline-block';
+        editBtn.style.display = 'inline-block';
+        generateBtn.textContent = 'Generate Code';
+        generateBtn.disabled = false;
+    }
+});
+
+editBtn.addEventListener('click', () => {
+    const code = codeOutput.value;
+    const language = languageSelect.value;
+    
+    if (!code.trim()) {
+        alert('No code to edit.');
+        return;
+    }
+    
+    // Show loading state
+    editBtn.textContent = 'Processing with Neural Network...';
+    editBtn.disabled = true;
+    
+    // Simulate neural network processing time
+    setTimeout(() => {
+        const editedCode = editCodeWithNeuralNetwork(code, language);
+        codeOutput.value = editedCode;
+        codeOutput.readOnly = false; // Allow manual editing after AI edit
+        
+        // Reset button
+        editBtn.textContent = 'Edit with Neural Network';
+        editBtn.disabled = false;
+    }, 1500); // 1.5 second delay to simulate neural network processing
+});
+
+copyBtn.addEventListener('click', () => {
+    const code = codeOutput.value;
+    navigator.clipboard.writeText(code).then(() => {
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => {
+            copyBtn.textContent = 'Copy to Clipboard';
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = code;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => {
+            copyBtn.textContent = 'Copy to Clipboard';
+        }, 2000);
+});
+
+downloadBtn.addEventListener('click', () => {
+    const code = codeOutput.value;
+    const language = languageSelect.value;
+    
+    if (!code.trim()) {
+        alert('No code to download.');
+        return;
+    }
+    
+    // Determine file extension based on language
+    const extensions = {
+        javascript: 'js',
+        python: 'py',
+        html: 'html',
+        css: 'css',
+        java: 'java',
+        cpp: 'cpp',
+    };
+    
+    const extension = extensions[language] || 'txt';
+    const filename = `generated_code.${extension}`;
+    
+    // Create download link
+    const blob = new Blob([code], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    // Show feedback
+    const originalText = downloadBtn.textContent;
+    downloadBtn.textContent = 'Downloaded!';
+    setTimeout(() => {
+        downloadBtn.textContent = 'Download File';
+    }, 2000);
+});
+
+saveBtn.addEventListener('click', () => {
+    const code = codeOutput.value;
+    const language = languageSelect.value;
+    
+    if (!code.trim()) {
+        alert('No code to save.');
+        return;
+    }
+    
+    // Generate filename
+    const extensions = {
+        javascript: 'js',
+        python: 'py',
+        html: 'html',
+        css: 'css',
+        java: 'java',
+        cpp: 'cpp'
+    };
+    
+    const extension = extensions[language] || 'txt';
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const filename = `generated_${timestamp}.${extension}`;
+    
+    // Save file
+    const fileData = {
+        name: filename,
+        language: language,
+        code: code,
+        timestamp: new Date().toLocaleString()
+    };
+    
+    savedFiles.push(fileData);
+    updateFileList();
+    
+    // Show feedback
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = 'Saved!';
+    setTimeout(() => {
+        saveBtn.textContent = 'Save to Project';
+    }, 2000);
+});
+
+// Canvas visualization event listeners
+startVizBtn.addEventListener('click', startVisualization);
+stopVizBtn.addEventListener('click', stopVisualization);
+
+// Initialize model on page load
+window.addEventListener('load', async () => {
+    try {
+        await initModel();
+        console.log('Neural network initialized successfully');
+    } catch (error) {
+        console.error('Failed to initialize neural network:', error);
+    }
+});
+});

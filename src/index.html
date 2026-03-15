@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Code Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <h2>📁 Generated Files</h2>
+            <div id="file-list" class="file-list">
+                <p class="no-files">No files saved yet</p>
+            </div>
+        </aside>
+        <div class="main-content">
+            <div class="container">
+                <header>
+                    <h1>🤖 AI Code Generator</h1>
+                    <p>Generate code snippets using AI</p>
+                </header>
+                <main>
+            <div class="input-section">
+                <label for="language">Programming Language:</label>
+                <select id="language">
+                    <option value="javascript">JavaScript</option>
+                    <option value="python">Python</option>
+                    <option value="html">HTML</option>
+                    <option value="css">CSS</option>
+                    <option value="java">Java</option>
+                    <option value="cpp">C++</option>
+                </select>
+                <label for="prompt">Describe what you want to generate:</label>
+                <textarea id="prompt" placeholder="e.g., Write a function to calculate factorial"></textarea>
+                <button id="generate-btn">Generate Code</button>
+            </div>
+            <div class="output-section">
+                <h2>Generated Code:</h2>
+                <textarea id="code-output" readonly></textarea>
+                <div class="button-group">
+                    <button id="copy-btn">Copy to Clipboard</button>
+                    <button id="download-btn">Download File</button>
+                    <button id="save-btn">Save to Project</button>
+                    <button id="edit-btn">Edit with Neural Network</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    <aside class="graphics-sidebar">
+        <h2>🎨 Neural Network Visualization</h2>
+        <canvas id="neural-canvas" width="300" height="400"></canvas>
+        <div class="canvas-controls">
+            <button id="start-viz-btn">Start Visualization</button>
+            <button id="stop-viz-btn">Stop Visualization</button>
+        </div>
+    </aside>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

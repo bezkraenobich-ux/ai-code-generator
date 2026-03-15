@@ -1,0 +1,286 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+.app-container {
+    display: flex;
+    max-width: 1400px;
+    width: 95%;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    min-height: 600px;
+}
+
+.sidebar {
+    width: 250px;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    padding: 1.5rem;
+    color: white;
+    border-right: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.sidebar h2 {
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.file-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.file-item {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.file-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.file-item.active {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.file-name {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.file-language {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.no-files {
+    text-align: center;
+    opacity: 0.7;
+    font-style: italic;
+    margin: 2rem 0;
+}
+
+.graphics-sidebar {
+    width: 320px;
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+    padding: 1.5rem;
+    color: white;
+    border-left: 2px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+.graphics-sidebar h2 {
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+#neural-canvas {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    flex: 1;
+    margin-bottom: 1rem;
+}
+
+.canvas-controls {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.canvas-controls button {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.canvas-controls button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    margin: 0;
+}
+
+header {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+    padding: 2rem;
+    text-align: center;
+    color: white;
+    margin: 0;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+header p {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+main {
+    padding: 2rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.input-section {
+    margin-bottom: 2rem;
+}
+
+.input-section label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: #555;
+}
+
+.input-section select,
+.input-section textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e1e5e9;
+    border-radius: 10px;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.input-section select:focus,
+.input-section textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.input-section textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+#generate-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+}
+
+#generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+#generate-btn:active {
+    transform: translateY(0);
+}
+
+.output-section {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+}
+
+.output-section h2 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+#code-output {
+    background: #2d3748;
+    color: #e2e8f0;
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    font-family: 'Courier New', monospace;
+    min-height: 200px;
+    border: none;
+    width: 100%;
+    resize: vertical;
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+#copy-btn, #edit-btn {
+    background: #48bb78;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#copy-btn:hover, #edit-btn:hover {
+    background: #38a169;
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+    .container {
+        width: 95%;
+    }
+    
+    header h1 {
+        font-size: 2rem;
+    }
+    
+    main {
+        padding: 1rem;
+    }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "ai-code-generator",
+  "version": "1.0.0",
+  "description": "A modern web application for generating code snippets using AI. This project provides an intuitive interface to request and generate code in multiple programming languages.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bezkraenobich-ux/ai-code-generator.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/bezkraenobich-ux/ai-code-generator/issues"
+  },
+  "homepage": "https://github.com/bezkraenobich-ux/ai-code-generator#readme",
+  "dependencies": {
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-node": "^4.15.0"
+  }
+}
